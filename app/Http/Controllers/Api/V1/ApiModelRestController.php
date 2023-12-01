@@ -63,7 +63,7 @@ abstract class ApiModelRestController extends BaseController
         $this->checkRoles($request);
 
         $data = $request->validate([
-            'per_page' => 'int|nullable|min:1|max:100',
+            'per_page' => 'int|nullable|min:1|max:250',
             'page' => 'int|nullable|min:1',
             'filter' => 'array|nullable',
             'sort_by' => 'string|nullable',
