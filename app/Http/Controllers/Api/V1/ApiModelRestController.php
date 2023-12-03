@@ -2,35 +2,45 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Model;
+use App\Traits\ApiResponse;
+use App\Traits\SearchQuery;
+use App\Transformers\SafeTransformer;
 use Exception;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Http\Response;
+use Illuminate\Http\JsonResponse as Response;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Spatie\LaravelIgnition\Recorders\QueryRecorder\Query;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
+/**
+ * @template TModel of Illuminate\Database\Eloquent\Model
+ * @template TTransformer of \League\Fractal\TransformerAbstract
+ * @template TValidator of Illuminate\Support\Facades\Validator
+ */
 abstract class ApiModelRestController extends BaseController
 {
+    use ApiResponse;
+    use SearchQuery;
+
     /**
-     * @var class-string<Model>|null
+     * @var class-string<TModel>|null
      */
     public static string|null $model = null;
 
     /**
-     * @var class-string<Validator>|null
+     * @var class-string<TValidator>|null
      */
     public static string|null $validator = null;
 
     /**
-     * @var class-string<Transformer>|null
+     * @var class-string<TTransformer>|null
      */
     public static string|null $transformer = SafeTransformer::class;
 
@@ -91,8 +101,7 @@ abstract class ApiModelRestController extends BaseController
 
             $paginator = $query->paginate($perPage)->appends($request->query());
             return $this->response->paginator($paginator, static::$transformer);
-        } catch (PDOException $exception) {
-            captureException($exception);
+        } catch (Exception $exception) {
             throw new BadRequestHttpException('Data error', $exception);
         }
     }
@@ -103,7 +112,7 @@ abstract class ApiModelRestController extends BaseController
      * @hideFromAPIDocumentation
      * @param Request $request
      * @return Response
-     * @throws TransformerException|ValidationException
+     * @throws Exception|ValidationException
      */
     public function store(Request $request): Response
     {
@@ -135,7 +144,7 @@ abstract class ApiModelRestController extends BaseController
             ]);
         }
 
-        return $this->respondWithModel($model, null, 201);
+        return $this->respondWithNoContent(201);
     }
 
     /**
@@ -145,7 +154,7 @@ abstract class ApiModelRestController extends BaseController
      * @param Request $request
      * @param mixed $uuid
      * @return Response
-     * @throws TransformerException
+     * @throws Exception
      */
     public function show(Request $request, mixed $uuid): Response
     {
@@ -225,7 +234,7 @@ abstract class ApiModelRestController extends BaseController
         }
 
         $model->delete();
-        return $this->response->noContent();
+        return $this->respondWithNoContent();
     }
 
     /**
@@ -238,7 +247,18 @@ abstract class ApiModelRestController extends BaseController
      */
     protected function respondWithModel(Arrayable $model, ?string $transformer = null, int $status = 200): Response
     {
-        return $this->response->item($model, new ($transformer ?? static::$transformer))->statusCode($status);
+        return response()->json(new ($transformer ?? static::$transformer)->transform($model), $status);
+    }
+
+    /**
+     * Create a response with no content
+     *
+     * @param int $status
+     * @return Response
+     */
+    protected function respondWithNoContent(int $status = 200): Response
+    {
+        return response()->json([], $status);
     }
 
     /**
