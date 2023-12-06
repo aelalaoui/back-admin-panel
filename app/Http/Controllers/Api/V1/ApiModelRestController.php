@@ -16,6 +16,7 @@ use Illuminate\Http\JsonResponse as Response;
 use Illuminate\Routing\Controller as BaseController;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Spatie\LaravelIgnition\Recorders\QueryRecorder\Query;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -29,6 +30,11 @@ abstract class ApiModelRestController extends BaseController
 {
     use ApiResponse;
     use SearchQuery;
+
+    /**
+     * @var string
+     */
+    public string $modelName = 'Resource';
 
     /**
      * @var class-string<TModel>|null
@@ -129,6 +135,7 @@ abstract class ApiModelRestController extends BaseController
             $data = $request->input();
         }
 
+        $model->uuid = str::uuid();
         $model->fill($data);
         if (method_exists($this, 'storeCustomization')) {
             $model = app()->call([$this, 'storeCustomization'], [
@@ -163,7 +170,7 @@ abstract class ApiModelRestController extends BaseController
         ////$this->checkRoles($request);
 
         /** @var Model|null $model */
-        $model = static::$model::find($uuid);
+        $model = $this->getRessourceFromModel($uuid);
 
         if (is_null($model)) {
             throw new ModelNotFoundException();
@@ -187,7 +194,7 @@ abstract class ApiModelRestController extends BaseController
         ////$this->checkRoles($request);
 
         /** @var Model|null $model */
-        $model = static::$model::find($uuid);
+        $model = $this->getRessourceFromModel($uuid);
 
         if (!is_null(static::$validator)) {
             $validator = new static::$validator($model, $this->getValidatorParameters($request));
@@ -195,6 +202,8 @@ abstract class ApiModelRestController extends BaseController
         } else {
             $data = $request->input();
         }
+
+        log::info($request);
 
         $model->fill($data);
         if (method_exists($this, 'updateCustomization')) {
@@ -229,7 +238,7 @@ abstract class ApiModelRestController extends BaseController
         ////$this->checkRoles($request);
 
         /** @var Model|null $model */
-        $model = static::$model::find($uuid);
+        $model = $this->getRessourceFromModel($uuid);
 
         if (is_null($model)) {
             throw new ModelNotFoundException();
@@ -299,5 +308,33 @@ abstract class ApiModelRestController extends BaseController
     public function qualifyCollectionQuery(Builder|Query $query, Request $request): Builder|Query
     {
         return $query;
+    }
+
+    /**
+     * @param mixed $uuid
+     * @return Model|null
+     */
+    public function getRessourceFromModel(mixed $uuid): ?Model
+    {
+        $model = null;
+        try {
+            /** @var Model|null $model */
+            $model = static::$model::find($uuid);
+        } catch (Exception $e) {
+            $errMessage = $e->getMessage();
+        }
+
+        if (is_null($model)) {
+            try {
+                /** @var Model|null $model */
+                $model = static::$model::where('uuid', $uuid)->first();
+            } catch (Exception $e) {
+                log::error('Can\'t find ' . $this->modelName . ' by uuid or id', [
+                    $e->getMessage(),
+                    $errMessage ?? '',
+                ]);
+            }
+        }
+        return $model;
     }
 }
