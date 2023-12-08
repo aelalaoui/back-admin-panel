@@ -203,9 +203,6 @@ abstract class ApiModelRestController extends BaseController
             $data = $request->input();
         }
 
-        log::info($request);
-
-        $model->fill($data);
         if (method_exists($this, 'updateCustomization')) {
             $model = app()->call([$this, 'updateCustomization'], [
                 'request' => $request,
@@ -213,7 +210,12 @@ abstract class ApiModelRestController extends BaseController
             ]);
         }
 
-        $model->save();
+        if (in_array('uuid', $model->getFillable()))
+        {
+            $model->where('uuid', $uuid)->update($data);
+        } else {
+            $model->update($data);
+        }
 
         if (method_exists($this, 'onPostUpdate')) {
             app()->call([$this, 'onPostUpdate'], [
@@ -221,6 +223,8 @@ abstract class ApiModelRestController extends BaseController
                 static::$model => $model,
             ]);
         }
+
+        $model = $this->getRessourceFromModel($uuid);
 
         return $this->respondWithModel($model);
     }

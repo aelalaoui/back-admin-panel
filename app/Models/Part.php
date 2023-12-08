@@ -18,6 +18,7 @@ class Part extends Model
      * @var array<int, string>
      */
     protected $fillable = [
+        'uuid',
         'ref',
         'designation',
         'quantity',
