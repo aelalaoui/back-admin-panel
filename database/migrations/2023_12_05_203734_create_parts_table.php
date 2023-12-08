@@ -12,11 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('parts', function (Blueprint $table) {
+            $table->id();
             $table->uuid();
-            $table->string('ref');
+            $table->string('ref')->index();
             $table->longText('designation');
-            $table->unsignedBigInteger('quantity');
-            $table->decimal('price_unit');
+            $table->unsignedBigInteger('quantity')->index();
+            $table->decimal('price_unit')->index();
             $table->timestamps();
         });
     }
