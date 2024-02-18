@@ -77,7 +77,7 @@ abstract class ApiModelRestController extends BaseController
      */
     public function index(Request $request): Response
     {
-        ////$this->checkRoles($request);
+        //$this->checkRoles($request);
 
         $data = $request->validate([
             'per_page' => 'int|nullable|min:1|max:250',
@@ -107,8 +107,21 @@ abstract class ApiModelRestController extends BaseController
             $this->sortCollectionQuery($query, $sortBy, $direction);
 
             $paginator = $query->paginate($perPage)->appends($request->query());
-            return response()->json($paginator);
-            //return $this->response->paginator($paginator, static::$transformer);
+            $response = [
+                'data' => $paginator->items(),
+                'links' => $paginator->linkCollection(),
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'next_page_url' => $paginator->nextPageUrl(),
+                    'path' => $paginator->path(),
+                    'per_page' => $paginator->perPage(),
+                    'prev_page_url' => $paginator->previousPageUrl(),
+                    'to' => $paginator->lastItem(),
+                    'total' => $paginator->total(),
+                ],
+            ];
+            return response()->json($response, );
+
         } catch (Exception $exception) {
             throw new BadRequestHttpException('Data error', $exception);
         }
@@ -124,7 +137,7 @@ abstract class ApiModelRestController extends BaseController
      */
     public function store(Request $request): Response
     {
-        ////$this->checkRoles($request);
+        //$this->checkRoles($request);
 
         $model = new static::$model;
 
@@ -167,7 +180,7 @@ abstract class ApiModelRestController extends BaseController
      */
     public function show(Request $request, mixed $uuid): Response
     {
-        ////$this->checkRoles($request);
+        //$this->checkRoles($request);
 
         /** @var Model|null $model */
         $model = $this->getRessourceFromModel($uuid);
@@ -191,7 +204,7 @@ abstract class ApiModelRestController extends BaseController
      */
     public function update(Request $request, string $uuid): Response
     {
-        ////$this->checkRoles($request);
+        //$this->checkRoles($request);
 
         /** @var Model|null $model */
         $model = $this->getRessourceFromModel($uuid);
@@ -239,7 +252,7 @@ abstract class ApiModelRestController extends BaseController
      */
     public function destroy(Request $request, string $uuid): Response
     {
-        ////$this->checkRoles($request);
+        //$this->checkRoles($request);
 
         /** @var Model|null $model */
         $model = $this->getRessourceFromModel($uuid);

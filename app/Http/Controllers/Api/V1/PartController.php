@@ -8,9 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Spatie\RouteAttributes\Attributes\Delete;
 use Spatie\RouteAttributes\Attributes\Get;
-use Spatie\RouteAttributes\Attributes\Patch;
 use Spatie\RouteAttributes\Attributes\Post;
-use Spatie\RouteAttributes\Attributes\Put;
 
 class partController extends ApiModelRestController
 {
