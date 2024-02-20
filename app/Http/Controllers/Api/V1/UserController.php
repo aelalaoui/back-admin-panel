@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Models\Part;
 use Illuminate\Http\JsonResponse as Response;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -10,27 +9,13 @@ use Spatie\RouteAttributes\Attributes\Delete;
 use Spatie\RouteAttributes\Attributes\Get;
 use Spatie\RouteAttributes\Attributes\Post;
 
-class PartController extends ApiModelRestController
+class UserController extends ApiModelRestController
 {
-    public string $modelName = 'Part';
+    public string $modelName = 'User';
 
-    public static string|null $model = 'App\Models\Part';
+    public static string|null $model = 'App\Models\User';
 
-    #[GET('parts')]
-    /**
-     * List of parts with pagination.
-     *
-     * @hideFromAPIDocumentation
-     * @param Request $request
-     * @return Response
-     * @throws \Exception
-     */
-    public function index(Request $request): Response
-    {
-        return parent::index($request);
-    }
-
-    #[POST('parts')]
+    #[POST('users')]
     /**
      * Create a new part
      *
@@ -43,7 +28,7 @@ class PartController extends ApiModelRestController
         return parent::store($request);
     }
 
-    #[POST('parts/{uuid}')]
+    #[POST('users/{uuid}')]
     /**
      * Update a part.
      *
@@ -58,7 +43,7 @@ class PartController extends ApiModelRestController
         return parent::update($request, $uuid);
     }
 
-    #[GET('parts/{uuid}')]
+    #[GET('users/{uuid}')]
     /**
      * Get one part from uuid.
      *
@@ -72,7 +57,7 @@ class PartController extends ApiModelRestController
         return parent::show($request, $uuid);
     }
 
-    #[DELETE('parts/{uuid}')]
+    #[DELETE('users/{uuid}')]
     /**
      * Delete a part.
      *
