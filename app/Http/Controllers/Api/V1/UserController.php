@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\JsonResponse as Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
+use Laravel\SerializableClosure\Serializers\Signed;
 use Spatie\RouteAttributes\Attributes\Delete;
 use Spatie\RouteAttributes\Attributes\Get;
+use Spatie\RouteAttributes\Attributes\Middleware;
 use Spatie\RouteAttributes\Attributes\Post;
 
 class UserController extends ApiModelRestController
@@ -26,6 +33,11 @@ class UserController extends ApiModelRestController
     public function store(Request $request): Response
     {
         return parent::store($request);
+    }
+
+    public function onPostStore(Request $request, User $user)
+    {
+        event(new Registered($user));
     }
 
     #[POST('users/{uuid}')]
@@ -68,5 +80,22 @@ class UserController extends ApiModelRestController
     public function destroy(Request $request, string $uuid): Response
     {
         return parent::destroy($request, $uuid);
+    }
+
+    #[GET('/email/verify/{id}/{hash}', name: "verification.verify")]
+    #[Middleware(Auth::class)]
+    #[Middleware(Signed::class)]
+    /**
+     * Verify user email
+     *
+     * @param EmailVerificationRequest $request
+     * @param mixed $id
+     * @param mixed $hash
+     * @return Response
+     */
+    public function verify(EmailVerificationRequest $request, mixed $id, mixed $hash): Response
+    {
+        $request->fulfill();
+        return $this->respondWithNoContent(202);
     }
 }
